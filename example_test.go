@@ -16,17 +16,18 @@ package itunes_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 
 	"github.com/orijtech/itunes"
 )
 
-func ExampleSearch() {
+func ExampleClient_Search() {
 	client := new(itunes.Client)
 	sres, err := client.Search(context.Background(), &itunes.Search{
-		Term:  "Shawty Lo",
-		Limit: 10,
+		Term:  "Change",
+		Limit: 12,
 	})
 
 	if err != nil {
@@ -34,6 +35,20 @@ func ExampleSearch() {
 	}
 
 	for i, result := range sres.Results {
-		fmt.Printf("#%d: result: %#v\n", i, result)
+		blob, _ := json.MarshalIndent(result, "", "  ")
+		fmt.Printf("#%d: result: %s\n", i, blob)
+	}
+}
+
+func ExampleClient_SearchById() {
+	client := new(itunes.Client)
+	sres, err := client.SearchById(context.Background(), "263058648")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for i, result := range sres.Results {
+		blob, _ := json.MarshalIndent(result, "", "  ")
+		fmt.Printf("#%d: result: %s\n", i, blob)
 	}
 }

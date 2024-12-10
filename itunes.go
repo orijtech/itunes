@@ -15,11 +15,12 @@
 package itunes
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -41,6 +42,10 @@ func (c *Client) Search(ctx context.Context, s *Search) (*SearchResult, error) {
 
 	if s == nil {
 		return nil, errNilSearch
+	}
+
+	if s.Id != "" {
+		return c.SearchById(ctx, s.Id)
 	}
 
 	urlValues, err := valueToURLValues(ctx, s)
@@ -66,14 +71,21 @@ func (c *Client) Search(ctx context.Context, s *Search) (*SearchResult, error) {
 		return nil, fmt.Errorf("status: %s", res.Status)
 	}
 
-	blob, err := ioutil.ReadAll(res.Body)
+	blob, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 
+	fmt.Printf("Search: %q => %s\n", queryString, blob)
 	sres := new(SearchResult)
 	if err := json.Unmarshal(blob, sres); err != nil {
 		return nil, err
+	}
+	for _, res := range sres.Results {
+		if res.TrackViewURL == "" {
+			continue
+			panic("no trackViewURL")
+		}
 	}
 
 	return sres, nil
@@ -161,6 +173,30 @@ type Result struct {
 	ArtworkURL30Px    string  `json:"artworkUrl30"`
 }
 
+func (c *Client) SearchById(ctx context.Context, id string) (*SearchResult, error) {
+	qURL := fmt.Sprintf("https://itunes.apple.com/lookup?id=%s", id)
+	req, err := http.NewRequestWithContext(ctx, "GET", qURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if res.StatusCode/100 != 2 {
+		return nil, fmt.Errorf("failed with %q", res.Status)
+	}
+	blob, err := io.ReadAll(res.Body)
+	res.Body.Close()
+	blob = bytes.TrimSpace(blob)
+
+	sres := new(SearchResult)
+	if err := json.Unmarshal(blob, sres); err != nil {
+		return nil, err
+	}
+	return sres, nil
+}
+
 type Search struct {
 	Term            string    `json:"term"`
 	Country         Country   `json:"country"`
@@ -171,6 +207,7 @@ type Search struct {
 	Limit           uint      `json:"limit"`
 	Version         string    `json:"version"`
 	ExplicitContent bool      `json:"explicit"`
+	Id              string    `json:"id"`
 }
 
 type Country string
