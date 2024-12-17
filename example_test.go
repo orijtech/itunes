@@ -26,8 +26,9 @@ import (
 func ExampleClient_Search() {
 	client := new(itunes.Client)
 	sres, err := client.Search(context.Background(), &itunes.Search{
-		Term:  "Change",
-		Limit: 12,
+		Term:   "Clubbin'",
+		Limit:  12,
+		Entity: "movie,musicVideo",
 	})
 
 	if err != nil {

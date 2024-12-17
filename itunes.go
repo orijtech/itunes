@@ -153,6 +153,8 @@ type Result struct {
 	TrackId           uint64  `json:"trackId"`
 	CollectionId      uint64  `json:"collectionId"`
 	ArtistName        string  `json:"artistName"`
+	LongDescription   string  `json:"longDescription"`
+	ShortDescription  string  `json:"shortDescription"`
 	TrackPrice        float64 `json:"trackPrice"`
 	Country           string  `json:"country"`
 	Currency          string  `josn:"currency"`
